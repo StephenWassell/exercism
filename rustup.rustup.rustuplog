@@ -1,0 +1,14 @@
+info: syncing channel updates for 'stable-x86_64-unknown-linux-gnu'
+info: latest update on 2019-08-15, rust version 1.37.0 (eae3437df 2019-08-13)
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'cargo'
+info: downloading component 'rust-docs'
+info: downloading component 'rust-std' for 'x86_64-unknown-linux-musl'
+info: downloading component 'rust-src'
+info: downloading component 'rust-analysis'
+info: downloading component 'rls'
+info: removing component 'rustc'
+info: rolling back changes
+error: could not rename component file from '/home/gitpod/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin' to '/home/gitpod/.rustup/tmp/9rc67qemmikeviy4_dir/bk'
+error: rustup is not installed at '/workspace/.cargo'
