@@ -4,5 +4,5 @@ name = "bob"
 version = "1.4.0"
 
 [dependencies]
-regex = "1"
+regex = "*"
 lazy_static = "*"
