@@ -1,5 +1,24 @@
 pub mod graph {
+	use std::collections::HashMap;
+
     pub mod graph_items {
+        pub mod attr {
+            #[derive(Clone, Debug, PartialEq)]
+            pub struct Attr {
+                name: String,
+                value: String,
+            }
+
+            impl Attr {
+                pub fn new(name: &str, value: &str) -> Self {
+                    Attr {
+                        name: name.to_string(),
+                        value: value.to_string(),
+                    }
+                }
+            }
+        }
+
         pub mod edge {
             #[derive(Clone, Debug, PartialEq)]
             pub struct Edge {
@@ -30,17 +49,23 @@ pub mod graph {
                     }
                 }
             }
-        }
+    	}
+
+        pub type Attrs = std::collections::HashMap<String, String>;
+        pub type Edges = Vec<edge::Edge>;
+        pub type Nodes = Vec<node::Node>;
     }
 
     pub struct Graph {
-        pub edges: Vec<graph_items::edge::Edge>,
-        pub nodes: Vec<graph_items::node::Node>,
+        pub attrs: graph_items::Attrs,
+        pub edges: graph_items::Edges,
+        pub nodes: graph_items::Nodes,
     }
 
     impl Graph {
         pub fn new() -> Self {
             Graph {
+                attrs: HashMap::new(),
                 edges: Vec::new(),
                 nodes: Vec::new(),
             }
