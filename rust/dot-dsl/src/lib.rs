@@ -2,22 +2,6 @@ pub mod graph {
     use std::collections::HashMap;
 
     pub mod graph_items {
-        // pub mod attr {
-        //     #[derive(Clone, Debug, PartialEq)]
-        //     pub struct Attr {
-        //         name: String,
-        //         value: String,
-        //     }
-
-        //     impl Attr {
-        //         pub fn new(name: &str, value: &str) -> Self {
-        //             Attr {
-        //                 name: name.to_string(),
-        //                 value: value.to_string(),
-        //             }
-        //         }
-        //     }
-        // }
 
         pub mod edge {
             use std::collections::HashMap;
@@ -39,11 +23,15 @@ pub mod graph {
                 }
 
                 pub fn with_attrs(&self, attrs: &[(&str, &str)]) -> Self {
-                    self.clone()
+                    let mut ret = self.clone();
+                    for (name, value) in attrs {
+                        ret.attrs.insert(name.to_string(), value.to_string());
+                    }
+                    ret
                 }
 
-                pub fn get_attr(&self, name: &str) -> Option<&String> {
-                    self.attrs.get(name)
+                pub fn get_attr(&self, name: &str) -> Option<&str> {
+                    Some(&self.attrs.get(name)?)
                 }
             }
         }
@@ -66,11 +54,15 @@ pub mod graph {
                 }
 
                 pub fn with_attrs(&self, attrs: &[(&str, &str)]) -> Self {
-                    self.clone()
+                    let mut ret = self.clone();
+                    for (name, value) in attrs {
+                        ret.attrs.insert(name.to_string(), value.to_string());
+                    }
+                    ret
                 }
 
-                pub fn get_attr(&self, name: &str) -> Option<&String> {
-                    self.attrs.get(name)
+                pub fn get_attr(&self, name: &str) -> Option<&str> {
+                    Some(&self.attrs.get(name)?)
                 }
             }
         }
@@ -120,8 +112,8 @@ pub mod graph {
             self.nodes.iter().find(|node| node.name == name)
         }
 
-        pub fn get_attr(&self, name: &str) -> Option<&String> {
-            self.attrs.get(name)
+        pub fn get_attr(&self, name: &str) -> Option<&str> {
+            Some(&self.attrs.get(name)?)
         }
     }
 }
