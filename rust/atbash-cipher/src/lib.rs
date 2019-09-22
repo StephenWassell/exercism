@@ -4,8 +4,8 @@ fn coded_char(c: char) -> Option<char> {
     const Z: u8 = 'z' as u8;
 
     match c {
-        'a'...'z' => Some((A + Z - c as u8) as char),
-        '0'...'9' => Some(c),
+        'a'..='z' => Some((A + Z - c as u8) as char),
+        '0'..='9' => Some(c),
         _ => None,
     }
 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub struct Edge {
     from: String,
     to: String,
-    attrs: crate::graph::Attrs,
+    attrs: super::super::Attrs,
 }
 
 impl Edge {
