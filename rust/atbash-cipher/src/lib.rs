@@ -26,8 +26,7 @@ pub fn encode(plain: &str) -> String {
     decode(plain)
         .chars()
         .enumerate()
-        .flat_map(|(i, c)| iter::once(space_or_none(i)).chain(iter::once(Some(c))))
-        .filter_map(|c| c)
+        .flat_map(|(i, c)| space_or_none(i).into_iter().chain(iter::once(c)))
         .collect()
 }
 
