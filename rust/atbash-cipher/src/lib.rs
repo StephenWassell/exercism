@@ -1,3 +1,5 @@
+use std::iter;
+
 /// encode or decode a single char
 fn coded_char(c: char) -> Option<char> {
     match c {
@@ -24,7 +26,7 @@ pub fn encode(plain: &str) -> String {
     decode(plain)
         .chars()
         .enumerate()
-        .flat_map(|(i, c)| vec![space_or_none(i), Some(c)])
+        .flat_map(|(i, c)| iter::once(space_or_none(i)).chain(iter::once(Some(c))))
         .filter_map(|c| c)
         .collect()
 }
