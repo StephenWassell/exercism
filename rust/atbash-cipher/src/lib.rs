@@ -32,8 +32,5 @@ pub fn encode(plain: &str) -> String {
 
 /// "Decipher" with the Atbash cipher.
 pub fn decode(cipher: &str) -> String {
-    cipher
-        .chars()
-        .filter_map(coded_char)
-        .collect()
+    cipher.chars().filter_map(coded_char).collect()
 }
