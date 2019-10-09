@@ -11,3 +11,5 @@ Cargo.lock
 
 *.rkt~
 racket/*/compiled/drracket
+
+elm-stuff/
