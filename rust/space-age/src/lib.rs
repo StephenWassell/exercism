@@ -1,6 +1,3 @@
-// in seconds
-const EARTH_ORBITAL_PERIOD_S: f64 = 31_557_600.0;
-
 #[derive(Debug)]
 pub struct Duration {
     s: u64,
@@ -14,6 +11,9 @@ impl From<u64> for Duration {
 
 impl Duration {
     fn earth_years(&self) -> f64 {
+        // in seconds
+        const EARTH_ORBITAL_PERIOD_S: f64 = 31_557_600.0;
+
         self.s as f64 / EARTH_ORBITAL_PERIOD_S
     }
 }
@@ -22,25 +22,18 @@ pub trait Planet {
     fn years_during(d: &Duration) -> f64;
 }
 
-pub trait OrbitalPeriod {
-    const ORBITAL_PERIOD: f64; // in Earth years
-}
-
-impl<T: OrbitalPeriod> Planet for T {
-    fn years_during(d: &Duration) -> f64 {
-        d.earth_years() / T::ORBITAL_PERIOD
-    }
-}
-
 macro_rules! define_planet {
-    ($name:ident, $orbital_period:expr) => (
+    ($name:ident, $orbital_period:expr) => {
         pub struct $name;
-        impl OrbitalPeriod for $name {
-            const ORBITAL_PERIOD: f64 = $orbital_period;
+        impl Planet for $name {
+            fn years_during(d: &Duration) -> f64 {
+                d.earth_years() / $orbital_period
+            }
         }
-    );
+    };
 }
 
+// orbital periods in earth years
 define_planet!(Mercury, 0.240_846_7);
 define_planet!(Venus, 0.615_197_26);
 define_planet!(Earth, 1.0);
