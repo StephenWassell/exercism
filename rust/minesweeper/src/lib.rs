@@ -24,20 +24,14 @@ pub fn annotate(minefield: &[&str]) -> Vec<String> {
         }
     }
 
-    let mut result: Vec<String> = Vec::new();
-
-    for (i, row) in minefield.iter().enumerate() {
-        result.push(
-            row.chars()
-                .enumerate()
-                .map(|(j, val)| match (val, counts.get(&(i as i32, j as i32))) {
-                    ('*', _) => '*',
-                    (_, None) => ' ',
-                    (_, Some(&count)) => count as char
-                })
-                .collect(),
-        )
-    }
-
-    result
+    minefield.iter().enumerate().map(|(i, row)|
+        row.chars()
+            .enumerate()
+            .map(|(j, val)| match (val, counts.get(&(i as i32, j as i32))) {
+                ('*', _) => '*',
+                (_, None) => ' ',
+                (_, Some(&count)) => count as char
+            })
+            .collect()
+        ).collect()
 }
