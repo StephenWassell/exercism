@@ -1,17 +1,20 @@
 fn to_digits(code: &str) -> Option<Vec<u32>> {
-    let no_spaces = code.chars().filter(|&c| !c.is_whitespace());
-
-    if no_spaces.clone().any(|c| !c.is_numeric()) {
+    if code.chars().any(|c| !(c.is_numeric() || c.is_whitespace())) {
         None
     } else {
-        Some(no_spaces.map(|c| c as u32 - b'0' as u32).collect())
+        Some(
+            code.chars()
+                .filter(|&c| !c.is_whitespace())
+                .map(|c| c as u32 - b'0' as u32)
+                .collect(),
+        )
     }
 }
 
-fn luhn_double(x: u32) -> u32 {
-    match x * 2 {
-        x2 if x2 > 9 => x2 - 9,
-        x2 => x2,
+fn luhn_double(n: u32) -> u32 {
+    match n * 2 {
+        m if m > 9 => m - 9,
+        m => m,
     }
 }
 
