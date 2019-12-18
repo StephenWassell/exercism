@@ -1,39 +1,34 @@
-// fn digits<'a>(code: &'a str) -> Option<impl Iterator> {
-//     let no_spaces = code.chars().filter(|&c| c != ' ').cloned();
+fn to_digits(code: &str) -> Option<Vec<u32>> {
+    let no_spaces = code.chars().filter(|&c| !c.is_whitespace());
 
-//     if no_spaces.any(|c| match c {
-//         '0'..='9' => false,
-//         _ => true,
-//     }) {
-//         return None;
-//     }
-
-//     Some(no_spaces.map(|c| c as u8 - b'0'))
-// }
-
-fn not_digit(c: char) -> bool {
-    match c {
-        '0'..='9' => false,
-        _ => true,
+    if no_spaces.clone().any(|c| !c.is_numeric()) {
+        None
+    } else {
+        Some(no_spaces.map(|c| c as u32 - b'0' as u32).collect())
     }
 }
+
+fn luhn_double(x: u32) -> u32 {
+    match x * 2 {
+        x2 if x2 > 9 => x2 - 9,
+        x2 => x2,
+    }
+}
+
 /// Check a Luhn checksum.
 pub fn is_valid(code: &str) -> bool {
-    let digits = code
-        .chars()
-        .filter(|&c| c != ' ');
+    let digits = match to_digits(code) {
+        Some(v) if v.len() > 1 => v,
+        _ => return false,
+    };
 
-    if digits.clone().count() < 2 || digits.clone().any(not_digit) {
-        return false;
-    }
-
-    let sum: u32 = digits
-        .map(|c| c as u8 - b'0')
-        .rev()
-        .enumerate()
-        .map(|(i, val)| (val as u32) << (i & 1))
-        .map(|val| if val > 9 { val - 9 } else { val })
-        .sum();
+    let sum = digits.rchunks(2).fold(0, |acc, item| {
+        acc + match item {
+            &[a, b] => luhn_double(a) + b,
+            &[a] => a,
+            _ => 0,
+        }
+    });
 
     sum % 10 == 0
 }
