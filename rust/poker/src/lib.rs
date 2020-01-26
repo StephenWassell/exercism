@@ -55,10 +55,81 @@ impl Card {
     }
 }
 
-fn same_rank(cards: &[Card]) -> bool {
-    let first_rank = &cards[0].rank;
-    cards[1..].iter().all(|c| c.rank == *first_rank)
+/// A flush is a hand that contains five cards all of the same suit
+fn is_flush(cards: &[Card]) -> bool {
+    let first_suit = &cards[0].suit;
+    cards[1..].iter().all(|c| c.suit == *first_suit)
 }
+
+/// A straight is a hand that contains five cards of sequential rank
+fn is_straight(cards: &[Card]) -> bool {
+    cards
+        .windows(2)
+        .all(|w| w[0].rank.n + 1 == w[1].rank.n)
+}
+
+/// If a slice of cards all have the same rank, return the slice
+/// - this makes the functions that call this one simpler
+fn same_rank(cards: &[Card]) -> Option<&[Card]> {
+    let first_rank = &cards[0].rank;
+    if cards[1..].iter().all(|c| c.rank == *first_rank) {
+        Some(cards)
+    } else {
+        None
+    }
+}
+
+fn is_n_of_a_kind(cards: &[Card], n: usize) -> Option<&[Card]> {
+    for w in cards.windows(n) {
+        if let Some(group) = same_rank(w) {
+            return Some(group);
+        }
+    }
+    None
+}
+
+/// If the hand contains a four of a kind, return that group as a slice
+// fn is_four_of_a_kind(cards: &[Card]) -> Option<&[Card]> {
+//     if let Some(four) = same_rank(&cards[0..4]) {
+//         Some(four)
+//     } else if let Some(four) = same_rank(&cards[1..5]) {
+//         Some(four)
+//     } else {
+//         None
+//     }
+// }
+
+/// For a full house, return the slice for the three of a kind only
+fn is_full_house(cards: &[Card]) -> Option<&[Card]> {
+    if let Some(three) = same_rank(&cards[0..3]) {
+        if same_rank(&cards[3..5]) != None {
+            return Some(three);
+        }
+    }
+    if let Some(three) = same_rank(&cards[2..5]) {
+        if same_rank(&cards[0..2]) != None {
+            return Some(three);
+        }
+    }
+    None
+}
+
+// fn is_three_of_a_kind(cards: &[Card]) -> Option<&[Card]> {
+//     same_rank(&cards[0..3]) || same_rank(&cards[1..4]) || same_rank(&cards[2..5])
+// }
+
+// fn is_two_pair(cards: &[Card]) -> Option<&[Card]> {
+//     (same_rank(&cards[0..2]) && same_rank(&cards[2..4]))
+//         || (same_rank(&cards[0..2]) && same_rank(&cards[3..5]))
+//         || (same_rank(&cards[1..3]) && same_rank(&cards[3..5]))
+// }
+
+// fn is_one_pair(cards: &[Card]) -> Option<&[Card]> {
+//     same_rank(&cards[0..2])
+//         || same_rank(&cards[1..3])
+//         || same_rank(&cards[2..4])
+//         || same_rank(&cards[3..5])
+// }
 
 #[derive(Debug, PartialEq)]
 struct Hand<'a> {
@@ -86,63 +157,24 @@ impl<'a> Hand<'a> {
         hand
     }
 
-    /// A flush is a hand that contains five cards all of the same suit
-    fn is_flush(&self) -> bool {
-        let first_suit = &self.cards[0].suit;
-        self.cards[1..].iter().all(|c| c.suit == *first_suit)
-    }
-
-    /// A straight is a hand that contains five cards of sequential rank
-    fn is_straight(&self) -> bool {
-        self.cards
-            .windows(2)
-            .all(|w| w[0].rank.n + 1 == w[1].rank.n)
-    }
-
-    fn is_four_of_a_kind(&self) -> bool {
-        same_rank(&self.cards[0..4]) || same_rank(&self.cards[1..5])
-    }
-
-    fn is_full_house(&self) -> bool {
-        (same_rank(&self.cards[0..3]) && same_rank(&self.cards[3..5]))
-            || (same_rank(&self.cards[0..2]) && same_rank(&self.cards[2..5]))
-    }
-
-    fn is_three_of_a_kind(&self) -> bool {
-        same_rank(&self.cards[0..3]) || same_rank(&self.cards[1..4]) || same_rank(&self.cards[2..5])
-    }
-
-    fn is_two_pair(&self) -> bool {
-        (same_rank(&self.cards[0..2]) && same_rank(&self.cards[2..4]))
-            || (same_rank(&self.cards[0..2]) && same_rank(&self.cards[3..5]))
-            || (same_rank(&self.cards[1..3]) && same_rank(&self.cards[3..5]))
-    }
-
-    fn is_one_pair(&self) -> bool {
-        same_rank(&self.cards[0..2])
-            || same_rank(&self.cards[1..3])
-            || same_rank(&self.cards[2..4])
-            || same_rank(&self.cards[3..5])
-    }
-
     fn calculate_value(&mut self) {
-        let flush = self.is_flush();
-        let straight = self.is_straight();
+        let flush = is_flush(&self.cards);
+        let straight = is_straight(&self.cards);
         self.value = if straight && flush {
             8
-        } else if self.is_four_of_a_kind() {
+        } else if is_four_of_a_kind(&self.cards) {
             7
-        } else if self.is_full_house() {
+        } else if is_full_house(&self.cards) {
             6
         } else if flush {
             5
         } else if straight {
             4
-        } else if self.is_three_of_a_kind() {
+        } else if is_three_of_a_kind(&self.cards) {
             3
-        } else if self.is_two_pair() {
+        } else if is_two_pair(&self.cards) {
             2
-        } else if self.is_one_pair() {
+        } else if is_one_pair(&self.cards) {
             1
         } else {
             0
