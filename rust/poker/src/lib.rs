@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Rank {
-    n: u8,
+    n: u16,
 }
 
 impl Rank {
@@ -9,13 +9,17 @@ impl Rank {
         // A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, and 2
         Rank {
             n: match s {
-                "A" => 14,
-                "K" => 13,
-                "Q" => 12,
-                "J" => 11,
-                _ => s.parse().unwrap(),
+                "A" => (1 << 13) | 1,
+                "K" => 1 << 12,
+                "Q" => 1 << 11,
+                "J" => 1 << 10,
+                _ => 1 << (s.parse::<u16>().unwrap() - 1),
             },
         }
+    }
+
+    fn is_next(&self, other: &Rank) -> bool {
+        (self.n << 1) & other.n != 0
     }
 }
 
@@ -135,46 +139,81 @@ fn is_full_house(cards: &[Card]) -> Option<&[Card]> {
 struct Hand<'a> {
     original: &'a str,
     cards: Vec<Card>,
-    value: u32,
+    score: u32,
 }
 
 impl<'a> Hand<'a> {
     fn new(original: &str) -> Hand {
-        let mut cards: Vec<Card> = original.split_whitespace().map(|s| Card::new(s)).collect();
-        if cards.len() != 5 {
-            panic!("hands must have 5 cards only")
-        }
-        cards.sort_unstable();
+        let cards: Vec<Card> = original.split_whitespace().map(|s| Card::new(s)).collect();
+        //if cards.len() != 5 {
+        //    panic!("hands must have 5 cards only")
+        //}
 
         let mut hand = Hand {
             original: original,
             cards: cards,
-            value: 0,
+            score: 0,
         };
 
-        hand.calculate_value();
+        hand.calculate_score();
 
         hand
     }
 
-    fn calculate_value(&mut self) {
-        let flush = is_flush(&self.cards);
-        let straight = is_straight(&self.cards);
-        self.value = if straight && flush {
+    fn calculate_score(&mut self) {
+        self.cards.sort_unstable(); // todo: not right for low ace
+
+        let mut straight = true;
+        let mut flush = true;
+        let mut kind_start = 0;
+
+        let mut twos = Vec::<&[Card]>::new();
+        let mut threes = Vec::<&[Card]>::new();
+        let mut fours = Vec::<&[Card]>::new();
+
+        for (i, w) in self.cards.windows(2).enumerate() {
+            let a = &w[0];
+            let b = &w[1];
+            let j = i + 1;
+
+            if a.suit != b.suit {
+                flush = false;
+            }
+
+            if !a.rank.is_next(&b.rank) {
+                straight = false;
+            }
+
+            if a.rank != b.rank {
+                let slice = &self.cards[kind_start..j];
+                match j - kind_start {
+                    2 => twos.push(slice),
+                    3 => threes.push(slice),
+                    4 => fours.push(slice),
+                    _ => ()
+                };
+                kind_start = j;
+            }
+        }
+        // todo: deal with last card being part of a kind
+
+//        let flush = is_flush(&self.cards);
+//        let straight = is_straight(&self.cards);
+        self.score = if straight && flush {
             8
-        } else if is_four_of_a_kind(&self.cards) {
+        } else if fours.len() >= 1 {
             7
-        } else if is_full_house(&self.cards) {
+        } else if threes.len() >= 1 && twos.len() >= 1 {
             6
         } else if flush {
             5
         } else if straight {
             4
-        } else if is_three_of_a_kind(&self.cards) {
+        } else if threes.len() >= 1 {
             3
-        } else if is_two_pair(&self.cards) {
+        } else if twos.len() >= 2 {
             2
-        } else if is_one_pair(&self.cards) {
+        } else if twos.len() >= 1 {
             1
         } else {
             0
@@ -188,7 +227,7 @@ impl<'a> Hand<'a> {
 /// the winning hand(s) as were passed in, not reconstructed strings which happen to be equal.
 pub fn winning_hands<'a>(hand_strings: &[&'a str]) -> Option<Vec<&'a str>> {
     let mut hands: Vec<Hand> = hand_strings.iter().map(|s| Hand::new(s)).collect();
-    hands.sort_unstable_by(|b, a| a.value.partial_cmp(&b.value).unwrap());
+    hands.sort_unstable_by(|b, a| a.score.partial_cmp(&b.score).unwrap());
     let mut winners: Vec<&'a str> = Vec::new();
     winners.push(hands[0].original);
     Some(winners)
