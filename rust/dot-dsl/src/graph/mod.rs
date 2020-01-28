@@ -1,17 +1,14 @@
 pub mod graph_items;
 
 use std::collections::HashMap;
-use crate::graph::graph_items::edge::Edge;
-use crate::graph::graph_items::node::Node;
-
-//pub type Edge = crate::graph::graph_items::edge::Edge;
-//pub type Node = crate::graph::graph_items::node::Node;
+use graph_items::edge::Edge;
+use graph_items::node::Node;
 
 pub type Attrs = std::collections::HashMap<String, String>;
 pub type Edges = Vec<Edge>;
 pub type Nodes = Vec<Node>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Graph {
     pub attrs: Attrs,
     pub edges: Edges,

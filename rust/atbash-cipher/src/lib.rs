@@ -1,11 +1,11 @@
+use std::iter;
+
 /// encode or decode a single char
 fn coded_char(c: char) -> Option<char> {
-    const A: u8 = 'a' as u8;
-    const Z: u8 = 'z' as u8;
-
     match c {
-        'a'...'z' => Some((A + Z - c as u8) as char),
-        '0'...'9' => Some(c),
+        'A'..='Z' => Some((b'a' + b'Z' - c as u8) as char),
+        'a'..='z' => Some((b'a' + b'z' - c as u8) as char),
+        '0'..='9' => Some(c),
         _ => None,
     }
 }
@@ -26,16 +26,11 @@ pub fn encode(plain: &str) -> String {
     decode(plain)
         .chars()
         .enumerate()
-        .flat_map(|(i, c)| vec![space_or_none(i), Some(c)])
-        .filter_map(|c| c)
+        .flat_map(|(i, c)| space_or_none(i).into_iter().chain(iter::once(c)))
         .collect()
 }
 
 /// "Decipher" with the Atbash cipher.
 pub fn decode(cipher: &str) -> String {
-    cipher
-        .to_lowercase()
-        .chars()
-        .filter_map(coded_char)
-        .collect()
+    cipher.chars().filter_map(coded_char).collect()
 }

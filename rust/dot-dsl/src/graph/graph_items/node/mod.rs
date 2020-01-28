@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Node {
     pub name: String,
-    attrs: crate::graph::Attrs,
+    attrs: super::super::Attrs,
 }
 
 impl Node {

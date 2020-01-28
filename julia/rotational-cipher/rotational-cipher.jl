@@ -1,0 +1,1 @@
+rotate(n, str) = str
