@@ -70,21 +70,35 @@ impl Card {
             suit: Suit::new(suit_str),
         }
     }
+
+    fn pack(&self) -> u8 {
+        self.buff.checked_shl(4).unwrap() | self.rank.n
+    }
 }
 
-fn calculate_score(cards: &mut Vec<Card>) -> u64 {
+fn buff(cards: &mut [Card], range: (usize, usize), amount: u8) {
+    for c in cards[range.0..range.1].iter_mut() {
+        c.buff = amount;
+    }
+}
 
+fn buff_combinations(cards: &mut [Card]) {
     let mut straight = true;
     let mut flush = true;
+
+    // index of the first card that's part of an n of a kind combination
     let mut kind_start = 0;
 
-    let mut twos = Vec::<&[Card]>::new();
-    let mut threes = Vec::<&[Card]>::new();
-    let mut fours = Vec::<&[Card]>::new();
+    // collections of n of a kind
+    // ranges in cards instead of slices, because the compiler is worried that they might overlap
+    let mut twos = Vec::<(usize, usize)>::new();
+    let mut threes = Vec::<(usize, usize)>::new();
+    let mut fours = Vec::<(usize, usize)>::new();
 
-    for (i, w) in cards.windows(2).enumerate() {
-        let a = &w[0];
-        let b = &w[1];
+    // look at each pair of cards in sequence
+    for (i, window) in cards.windows(2).enumerate() {
+        let a = &window[0];
+        let b = &window[1];
         let j = i + 1;
 
         if !b.suit.is_end_marker() {
@@ -98,11 +112,12 @@ fn calculate_score(cards: &mut Vec<Card>) -> u64 {
         }
         
         if a.rank != b.rank {
-            let slice = &cards[kind_start..j];
+            // found the end of an n of a kind sequence
+            let range = (kind_start, j);
             match j - kind_start {
-                2 => twos.push(slice),
-                3 => threes.push(slice),
-                4 => fours.push(slice),
+                2 => twos.push(range),
+                3 => threes.push(range),
+                4 => fours.push(range),
                 _ => (),
             };
             kind_start = j;
@@ -110,24 +125,28 @@ fn calculate_score(cards: &mut Vec<Card>) -> u64 {
     }
 
     if straight && flush {
-        8
+        buff(cards, (0, cards.len()), 8);
     } else if fours.len() >= 1 {
-        7
+        buff(cards, fours[0], 7);
     } else if threes.len() >= 1 && twos.len() >= 1 {
-        6
+        buff(cards, threes[0], 6);
     } else if flush {
-        5
+        buff(cards, (0, cards.len()), 5);
     } else if straight {
-        4
+        buff(cards, (0, cards.len()), 4);
     } else if threes.len() >= 1 {
-        3
+        buff(cards, threes[0], 3);
     } else if twos.len() >= 2 {
-        2
+        buff(cards, twos[0], 2);
+        buff(cards, twos[1], 2);
     } else if twos.len() >= 1 {
-        1
-    } else {
-        0
+        buff(cards, twos[0], 1);
     }
+}
+
+/// pack all the cards into a single u64
+fn calculate_score(cards: &[Card]) -> u64 {
+    cards.iter().rev().fold(0, |acc, card| acc.checked_shl(8).unwrap() | card.pack() as u64)
 }
 
 #[derive(Debug, PartialEq)]
@@ -140,20 +159,21 @@ struct Hand<'a> {
 impl<'a> Hand<'a> {
     fn new(original: &str) -> Hand {
         let mut cards: Vec<Card> = original.split_whitespace().map(|s| Card::new(s)).collect();
-        //if cards.len() != 5 {
-        //    panic!("hands must have 5 cards only")
-        //}
 
+        // sort the cards by rank, low to high
         cards.sort_unstable();
 
-        // add end marker
+        // add end marker to help find n of a kind combinations
         cards.push(Card::new("XX"));
 
-        //buff_specials(&mut cards);
+        buff_combinations(&mut cards);
 
-        //cards.sort_unstable();
+        cards.pop();
 
-        let score = calculate_score(&mut cards);
+        // now combinations are worth extra so sort them to the end
+        cards.sort_unstable();
+
+        let score = calculate_score(&cards);
 
         Hand {
             original: original,
