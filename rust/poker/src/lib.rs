@@ -9,7 +9,7 @@ impl Rank {
         // A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, and 2
         Rank {
             n: match s {
-                "X" => 255, // end marker
+                "X" => 0, // end marker
                 "A" => 14,
                 "K" => 13,
                 "Q" => 12,
@@ -76,12 +76,6 @@ impl Card {
     }
 }
 
-fn buff(cards: &mut [Card], range: (usize, usize), amount: u8) {
-    for c in cards[range.0..range.1].iter_mut() {
-        c.buff = amount;
-    }
-}
-
 fn buff_combinations(cards: &mut [Card]) {
     let mut straight = true;
     let mut flush = true;
@@ -89,11 +83,10 @@ fn buff_combinations(cards: &mut [Card]) {
     // index of the first card that's part of an n of a kind combination
     let mut kind_start = 0;
 
-    // collections of n of a kind
-    // ranges in cards instead of slices, because the compiler is worried that they might overlap
-    let mut twos = Vec::<(usize, usize)>::new();
-    let mut threes = Vec::<(usize, usize)>::new();
-    let mut fours = Vec::<(usize, usize)>::new();
+    // collections of n of a kind - index of the first card in the combination
+    let mut twos = Vec::<usize>::new();
+    let mut threes = Vec::<usize>::new();
+    let mut fours = Vec::<usize>::new();
 
     // look at each pair of cards in sequence
     for (i, window) in cards.windows(2).enumerate() {
@@ -105,19 +98,18 @@ fn buff_combinations(cards: &mut [Card]) {
             if a.suit != b.suit {
                 flush = false;
             }
-    
+
             if !a.rank.is_next(&b.rank) {
                 straight = false;
             }
         }
-        
+
         if a.rank != b.rank {
             // found the end of an n of a kind sequence
-            let range = (kind_start, j);
             match j - kind_start {
-                2 => twos.push(range),
-                3 => threes.push(range),
-                4 => fours.push(range),
+                2 => twos.push(kind_start),
+                3 => threes.push(kind_start),
+                4 => fours.push(kind_start),
                 _ => (),
             };
             kind_start = j;
@@ -125,28 +117,30 @@ fn buff_combinations(cards: &mut [Card]) {
     }
 
     if straight && flush {
-        buff(cards, (0, cards.len()), 8);
+        cards[0].buff = 8;
     } else if fours.len() >= 1 {
-        buff(cards, fours[0], 7);
+        cards[fours[0]].buff = 7;
     } else if threes.len() >= 1 && twos.len() >= 1 {
-        buff(cards, threes[0], 6);
+        cards[threes[0]].buff = 6;
     } else if flush {
-        buff(cards, (0, cards.len()), 5);
+        cards[0].buff = 5;
     } else if straight {
-        buff(cards, (0, cards.len()), 4);
+        cards[0].buff = 4;
     } else if threes.len() >= 1 {
-        buff(cards, threes[0], 3);
+        cards[threes[0]].buff = 3;
     } else if twos.len() >= 2 {
-        buff(cards, twos[0], 2);
-        buff(cards, twos[1], 2);
+        cards[twos[0]].buff = 2;
+        cards[twos[1]].buff = 2;
     } else if twos.len() >= 1 {
-        buff(cards, twos[0], 1);
+        cards[twos[0]].buff = 1;
     }
 }
 
 /// pack all the cards into a single u64
 fn calculate_score(cards: &[Card]) -> u64 {
-    cards.iter().rev().fold(0, |acc, card| acc.checked_shl(8).unwrap() | card.pack() as u64)
+    cards.iter().rev().fold(0, |acc, card| {
+        acc.checked_shl(8).unwrap() | card.pack() as u64
+    })
 }
 
 #[derive(Debug, PartialEq)]
@@ -190,7 +184,11 @@ impl<'a> Hand<'a> {
 pub fn winning_hands<'a>(hand_strings: &[&'a str]) -> Option<Vec<&'a str>> {
     let mut hands: Vec<Hand> = hand_strings.iter().map(|s| Hand::new(s)).collect();
     hands.sort_unstable_by(|b, a| a.score.partial_cmp(&b.score).unwrap());
+
     let mut winners: Vec<&'a str> = Vec::new();
-    winners.push(hands[0].original);
+    for hand in hands.iter().filter(|h| h.score == hands[0].score) {
+        winners.push(hand.original);
+    }
+
     Some(winners)
 }
