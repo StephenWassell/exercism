@@ -21,7 +21,7 @@ impl Rank {
 
     /// Does another card come after this one in a straight?
     fn is_next(&self, other: &Rank) -> bool {
-        // The strange logic here is because an ace can be high or low for a straight,
+        // The special case here is because an ace can be high or low for a straight,
         // but they are stored as high so will be last when the hand is sorted.
         // This makes A2345 equivalent to 2345A:
         self.n + 1 == other.n || self.n == 5 && other.n == 14
@@ -56,7 +56,9 @@ impl Suit {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Card {
-    buff: u8,
+    // The boost is set for the first card in a combination (eg n of a kind)
+    // to a value that corresponds to the value of the hand.
+    boost: u8,
     rank: Rank,
     suit: Suit,
 }
@@ -65,47 +67,49 @@ impl Card {
     fn new(s: &str) -> Card {
         let (rank_str, suit_str) = s.split_at(s.len() - 1);
         Card {
-            buff: 0,
+            boost: 0,
             rank: Rank::new(rank_str),
             suit: Suit::new(suit_str),
         }
     }
 
     fn pack(&self) -> u8 {
-        self.buff.checked_shl(4).unwrap() | self.rank.n
+        self.boost.checked_shl(4).unwrap() | self.rank.n
     }
 }
 
-fn buff_combinations(cards: &mut [Card]) {
-    let mut straight = true;
+fn boost_combinations(cards: &mut [Card]) {
+    // Assume every hand is a straight or flush with the lowest card first
+    // (because it's already sorted) unless we discover otherwise.
+    let mut straight: Option<usize> = Some(0);
     let mut flush = true;
 
-    // index of the first card that's part of an n of a kind combination
+    // Index of the first card that's part of an n of a kind combination
     let mut kind_start = 0;
 
-    // collections of n of a kind - index of the first card in the combination
+    // Collections of n of a kind - index of the first card in the combination
     let mut twos = Vec::<usize>::new();
     let mut threes = Vec::<usize>::new();
     let mut fours = Vec::<usize>::new();
 
-    // look at each pair of cards in sequence
+    // Look at each pair of cards in sequence
     for (i, window) in cards.windows(2).enumerate() {
         let a = &window[0];
         let b = &window[1];
         let j = i + 1;
 
         if !b.suit.is_end_marker() {
+             // Check if it's not a straight or flush after all
             if a.suit != b.suit {
                 flush = false;
             }
-
             if !a.rank.is_next(&b.rank) {
-                straight = false;
+                straight = None;
             }
         }
 
         if a.rank != b.rank {
-            // found the end of an n of a kind sequence
+            // Found the end of an n of a kind sequence
             match j - kind_start {
                 2 => twos.push(kind_start),
                 3 => threes.push(kind_start),
@@ -116,23 +120,30 @@ fn buff_combinations(cards: &mut [Card]) {
         }
     }
 
-    if straight && flush {
-        cards[0].buff = 8;
+    // Special case for straight with a low ace
+    // - we want to boost the lowest card in the sequence
+    if straight != None && cards[0].rank.n == 2 && cards[4].rank.n == 14 {
+        straight = Some(4);
+        cards[4].rank.n = 1;
+    }
+
+    if straight != None && flush {
+        cards[straight.unwrap()].boost = 8;
     } else if fours.len() >= 1 {
-        cards[fours[0]].buff = 7;
+        cards[fours[0]].boost = 7;
     } else if threes.len() >= 1 && twos.len() >= 1 {
-        cards[threes[0]].buff = 6;
+        cards[threes[0]].boost = 6;
     } else if flush {
-        cards[0].buff = 5;
-    } else if straight {
-        cards[0].buff = 4;
+        cards[0].boost = 5;
+    } else if straight != None {
+        cards[straight.unwrap()].boost = 4;
     } else if threes.len() >= 1 {
-        cards[threes[0]].buff = 3;
+        cards[threes[0]].boost = 3;
     } else if twos.len() >= 2 {
-        cards[twos[0]].buff = 2;
-        cards[twos[1]].buff = 2;
+        cards[twos[0]].boost = 2;
+        cards[twos[1]].boost = 2;
     } else if twos.len() >= 1 {
-        cards[twos[0]].buff = 1;
+        cards[twos[0]].boost = 1;
     }
 }
 
@@ -160,7 +171,7 @@ impl<'a> Hand<'a> {
         // add end marker to help find n of a kind combinations
         cards.push(Card::new("XX"));
 
-        buff_combinations(&mut cards);
+        boost_combinations(&mut cards);
 
         cards.pop();
 
