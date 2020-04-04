@@ -39,13 +39,13 @@ end
 
 # Bonus A
 @testset "Bonus A: string literal R13" begin
-    @test_skip R13"The quick brown fox jumps over the lazy dog." == "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
+    @test R13"The quick brown fox jumps over the lazy dog." == "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
 end
 
 # Bonus B
 @testset "Bonus B: string literals" begin
-    @test_skip R5"OMG" == "TRL"
-    @test_skip R4"Testing 1 2 3 testing" == "Xiwxmrk 1 2 3 xiwxmrk"
-    @test_skip R21"Let's eat, Grandma!" == "Gzo'n zvo, Bmviyhv!"
-    @test_skip R13"The quick brown fox jumps over the lazy dog." == "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
+    @test R5"OMG" == "TRL"
+    @test R4"Testing 1 2 3 testing" == "Xiwxmrk 1 2 3 xiwxmrk"
+    @test R21"Let's eat, Grandma!" == "Gzo'n zvo, Bmviyhv!"
+    @test R13"The quick brown fox jumps over the lazy dog." == "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
 end
